@@ -10,14 +10,14 @@
 # Modifying or copying source code is explicitly forbidden. 
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, List
 if TYPE_CHECKING:
     from inventory.scanner.runners import Parameters
 
 from inventory.scanner.kerasretinanet.models.tflite import TFliteRunner
 from inventory.scanner.dataprocessing.utils import validate_path
 import numpy as np
-
+import zxingcpp
 
 class IdentificationModel:
     """
@@ -84,7 +84,30 @@ class IdentificationModel:
 
         return boxes, scores, labels
 
-    def decode(self):
+    def decode(self, image: np.ndarray) -> List[zxingcpp.Result]:
         """
+        This method decodes barcodes and QR codes given a numpy image.
+
+        Parameters
+        ----------
+            image: np.ndarray
+                This is the image to pass to the barcode decoder.
+
+        Returns
+        -------
+            decodes: list
+                This list contains zxingcpp.Result objects with attributes
+                text, format, content, position.
         """
-        pass
+        barcodes = zxingcpp.read_barcodes(image)
+        
+        print(f"{type(barcodes)=}")
+        for barcode in barcodes:
+            print(f"{type(barcode)=}")
+            print('Found barcode:'
+                f'\n Text:    "{barcode.text}"'
+                f'\n Format:   {barcode.format}'
+                f'\n Content:  {barcode.content_type}'
+                f'\n Position: {barcode.position}')
+        if len(barcodes) == 0:
+            print("Could not find any barcode.")
