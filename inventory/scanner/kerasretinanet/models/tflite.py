@@ -103,7 +103,8 @@ class TFliteRunner:
                 The prediction bounding boxes.. [[box1], [box2], ...].
 
             nmsed_classes: np.ndarray
-                The prediction labels.. [cl1, cl2, ...].
+                The prediction labels.. [cl1, cl2, ...]. A label of 0
+                represents barcodes and a label of 1 means QR codes.
 
             nmsed_scores: np.ndarray
                 The prediction confidence scores.. [score, score, ...]

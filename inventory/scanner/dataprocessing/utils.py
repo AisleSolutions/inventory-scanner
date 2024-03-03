@@ -12,10 +12,12 @@
 """
 This module will contain helper functions for processing images.
 """
+from PIL import Image, ImageDraw, ImageFont
 from typing import Union
-from PIL import Image
 import numpy as np
 import os
+
+font = ImageFont.load_default()
 
 def validate_path(source: str) -> str:
     """
@@ -85,7 +87,7 @@ def resize(
     image = image.resize(size)
     return np.asarray(image), scale
 
-def RGB2BGR(image:np.ndarray) -> np.ndarray:
+def rgb2bgr(image:np.ndarray) -> np.ndarray:
     """
     This converts an RGB image to a BGR.
 
@@ -224,4 +226,70 @@ def clamp_dimension(
         dimension: float or int
             The clamped dimension in between the minimum and the maximum.
     """
-    return max if dimension > max else min if dimension < min else dimension
+    return max if dimension > max else min if dimension < min else dimension #NOSONAR
+
+def draw_bounding_box(
+        image_draw: ImageDraw.ImageDraw, 
+        box: tuple,
+        color="LimeGreen",
+        width=3
+    ):
+    """
+    Draw bounding boxes on the image.
+
+    Parameters
+    ----------
+        image_draw: ImageDraw.ImageDraw
+            This is the ImageDraw object initialized using Pillow by
+            passing an PIL.Image.Image object.
+
+        box: tuple
+            This contains ((xmin, ymin), (xmax, ymax)) bounding box coordinates
+            in pixels.
+
+        color: str
+            The color of the bounding box.
+
+        width: int
+            This is the width of the lines of the bounding box.
+    """
+    image_draw.rectangle(
+        box,
+        outline=color,
+        width=width)
+    
+def draw_text(
+        image_draw: ImageDraw.ImageDraw,
+        text: str,
+        position: tuple,
+        color: str="black", 
+        align: str="left"
+    ):
+    """
+    Draws text on the image.
+
+    Parameters
+    ----------
+        image_draw: ImageDraw.ImageDraw
+            This is the ImageDraw object initialized using Pillow by
+            passing an PIL.Image.Image object.
+
+        text: str
+            This is the text to draw on the image.
+
+        position: tuple
+            This is the (xmin, ymin) position to place the text on the image.
+
+        color: str
+            This is the color of the text.
+
+        align: str
+            This is the text alignment on the image.
+    """
+    image_draw.text(
+        position,
+        text,
+        font=font,
+        align=align,
+        fill=color
+    )

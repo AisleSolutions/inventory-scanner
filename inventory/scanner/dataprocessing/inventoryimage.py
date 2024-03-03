@@ -15,6 +15,28 @@ from PIL import Image
 import numpy as np
 import os
 
+class PackageImage:
+    """
+    This class represents image cropped to contain only a single package.
+    Any text detected on the package is stored here.
+    """
+    pass
+
+class CodeImage:
+    """
+    This class represents image cropped to contain the barcode or QRCode.
+    Any decoded info is also stored here. 
+    """
+    pass
+
+class ShelfImage:
+    """
+    This class represents image cropped to contain a single shelf on a warehouse.
+    This image will show the individual items on the shelf for visual 
+    inspection.
+    """
+    pass
+
 class InventoryImage:
     """
     Class representation of an image which provides the numpy array 

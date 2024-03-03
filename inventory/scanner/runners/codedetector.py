@@ -41,7 +41,10 @@ class IdentificationModel:
         ) -> None:
         
         self.model = validate_path(model)
-        self.loaded_model = TFliteRunner(self.model)
+        self.loaded_model = TFliteRunner(
+            model=self.model,
+            parameters=parameters
+        )
         self.parameters = parameters
 
     def detect(self, image: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -99,15 +102,4 @@ class IdentificationModel:
                 This list contains zxingcpp.Result objects with attributes
                 text, format, content, position.
         """
-        barcodes = zxingcpp.read_barcodes(image)
-        
-        print(f"{type(barcodes)=}")
-        for barcode in barcodes:
-            print(f"{type(barcode)=}")
-            print('Found barcode:'
-                f'\n Text:    "{barcode.text}"'
-                f'\n Format:   {barcode.format}'
-                f'\n Content:  {barcode.content_type}'
-                f'\n Position: {barcode.position}')
-        if len(barcodes) == 0:
-            print("Could not find any barcode.")
+        return zxingcpp.read_barcodes(image)

@@ -38,7 +38,8 @@ def start_application(args):
     count_processor = ProcessCount(
         path_package_model=args.package_model,
         path_identification_model=args.identification_model,
-        parameters=parameters
+        parameters=parameters,
+        show=args.show
     )
     
     if args.application.lower() == "gstreamer":
@@ -116,12 +117,16 @@ def main():
     parser.add_argument("--acceptance_score",
                         help=("The score threshold to consider as valid detections."),
                         type=float,
-                        default=0.25)
+                        default=0.60)
     parser.add_argument("--normalization",
                         help=("The type of image normalization to perform."),
                         choices=["signed", "unsigned", "raw"],
                         type=str,
                         default="unsigned")
+    parser.add_argument("--max_detections",
+                        help=("The maximum detections to set for the NMS."),
+                        type=int,
+                        default=300)
     parser.add_argument("--warmup",
                         help=("The number of model warmup iterations to perform "
                               "prior for inference."),

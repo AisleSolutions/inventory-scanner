@@ -4,6 +4,9 @@ packages and to classify each package by detecting existing facing barcodes
 or QR codes on the packages.
 *Note OpenCV or GStreamer is needed to run the application, please see the section [Supported Environments and Applications](#supported-environments-and-applications)* for more information for their installations as this could vary from system to system.
 
+# Problem/Use Case
+To efficiently and reliably track inventory changes in warehouses saving clients time and money from manual inventory tracking labour and possible errors. Package counts are generated classifying each package by the detected barcodes/QR codes or by the text that the algorithms detected on each package. Otherwise, images of the shelving are recorded for clients to visually inspect the count without the need for onsite inspection. 
+
 # Overview
 - [Changelog](#changelog)
 - [Installation](#installation)
@@ -155,12 +158,13 @@ sudo -s
 ```
 
 # References
-Running the package detection model uses the implementation from [keras-retinanet.](https://github.com/fizyr/keras-retinanet). The repository was cloned and the installation process was followed. However, an addition was made to the repository to include TFLite functionality. 
+[1] Running the package detection model uses the implementation from [keras-retinanet.](https://github.com/fizyr/keras-retinanet). The repository was cloned and the installation process was followed. However, an addition was made to the repository to include TFLite functionality. 
 The installation process shown in the repository created the following files which is required to run the package model.
 
 * Linux compiled: compute_overlap.cpython-311-aarch64-linux-gnu.so
 * Windows compiled: compute_overlap.cp311-win_amd64.pyd
 
-The pretrained model for detecting packages was found in [SKU110K_CVPR19 repository](https://github.com/eg4000/SKU110K_CVPR19). The model was then converted as an inference model following instructions provided in the keras-retinanet repository. 
+[2] The pretrained model for detecting packages was found in [SKU110K_CVPR19 repository](https://github.com/eg4000/SKU110K_CVPR19). The model was then converted as an inference model following instructions provided in the keras-retinanet repository. 
 
-The model for detecting barcodes and QR codes was trained using [YoloV5](https://github.com/ultralytics/yolov5). The dataset used to train the model was found in RoboFlow named as [barcodes-zmxjq_dataset](https://universe.roboflow.com/labeler-projects/barcodes-zmxjq)
+[3] The model for detecting barcodes and QR codes was trained using [YoloV5](https://github.com/ultralytics/yolov5). The dataset used to train the model was found in RoboFlow named as [barcodes-zmxjq_dataset](https://universe.roboflow.com/labeler-projects/barcodes-zmxjq). It is true that the dependency `zxing-cpp` is used to decode the barcodes and QR codes also provides positions of the detected codes. However, a size limit of the codes was observed to allow proper detections using this dependency alone. Smaller codes or samples that are far from the camera was detected using a trained model given that the dataset used to train this model had samples to overcome this difficulty. A decision was made to crop the detections from the trained model and pass those cropped images to the `zxing-cpp` dependency to decode the samples. 
+

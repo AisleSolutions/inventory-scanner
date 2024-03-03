@@ -55,7 +55,8 @@ class OpenCVStreamer:
         ) -> None:
         self.source = source
         self.count_processor = count_processor
-        self.cap = self.open_camera(source, resolution, fps)
+        self.cap = self.open_camera(source)
+        #self.cap = self.setup_cap(self.cap, resolution, fps) #NOSONAR
         self.show = show
         if not (self.wait_for_cam()):
             logger(
@@ -63,7 +64,7 @@ class OpenCVStreamer:
                 code="ERROR")
 
     @staticmethod
-    def open_camera(source: int=0, resolution: tuple=(1920,1080), fps: int=30):
+    def open_camera(source: int=0):
         """
         Initializes the camera feed.
 
@@ -71,12 +72,6 @@ class OpenCVStreamer:
         ----------
             source: int
             This is the index of the camera source to use.
-
-            fps: int
-                This is the frames per second to operate the stream.
-
-            resolution: tuple
-                This is the (width, height) resolution of each frame.
 
         Returns
         -------
@@ -89,6 +84,30 @@ class OpenCVStreamer:
             logger(
                 "OpenCV is required for streaming. Please see README.md for installation instructions",
                 code="ERROR")
+        return cap
+    
+    @staticmethod
+    def setup_cap(cap, resolution: tuple=(1920,1080), fps: int=30):
+        """
+        Provides initializes of the VideoCapturing object with resolution
+        and fps settings.
+
+        Parameeters
+        -----------
+            cap: cv2.VideoCapture
+                Provides OpenCV video capturing functionalities.
+
+            resolution: tuple
+                This is the (width, height) resolution of each frame.
+
+            fps: int
+                This is the frames per second to operate the stream.
+
+        Returns
+        -------
+            cap: cv2.VideoCapture
+                Provides OpenCV video capturing functionalities.
+        """
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, resolution[0])
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution[1])
         fourcc = cv2.VideoWriter_fourcc(*"MJPG")
@@ -122,7 +141,7 @@ class OpenCVStreamer:
         """
         ret, image = self.cap.read()
         if ret:
-            image, ret = self.count_processor.process(image)
+            image, ret = self.count_processor.process_codes(image)
 
             if self.show:
                 cv2.imshow("frame", image)

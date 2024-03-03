@@ -19,13 +19,17 @@ if TYPE_CHECKING:
     from inventory.scanner.runners import Parameters
 
 from inventory.scanner.runners import IdentificationModel, PackageModel
-from inventory.scanner.dataprocessing.utils import clamp_dimension
+from inventory.scanner.dataprocessing.utils import (
+    draw_bounding_box,
+    draw_text
+)
+from PIL import Image, ImageDraw
 #from autocorrect import Speller
 import numpy as np
 # import enchant
 # import easyocr
-# import cv2
-# import re
+
+
 
 """This needs to run only once to load the model into memory."""
 # # This object detects texts in images.
@@ -34,8 +38,6 @@ import numpy as np
 # speller = Speller(lang='en')
 # # This object contains words in the English dictionary for correct spelling.
 # dictionary = enchant.Dict("en_US")
-
-# import tensorflow as tf
 
 
 class ProcessCount:
@@ -78,7 +80,8 @@ class ProcessCount:
             self,
             path_package_model: str,
             path_identification_model: str,
-            parameters: Parameters
+            parameters: Parameters,
+            show: bool=False
         ) -> None:
         
         self.package_model = PackageModel(
@@ -89,96 +92,71 @@ class ProcessCount:
             model=path_identification_model,
             parameters=parameters
         )
+        self.show = show
 
-    def process(self, image: np.ndarray):
+    def process_packages(self, image: np.ndarray):
         """
-        Multithreading occurs here to process the detections 
-        (packages and their respective barcodes and QR codes).
+        """
+        """Thread 1: Detect Packages -> Search for text in the detections."""
+        #boxes, scores, labels = self.package_model.detect(image)
 
+    def process_codes(self, image: np.ndarray):
+        """
+        Thread 2: Detect Barcodes and QR Codes -> Crop image -> Decode detections.
+
+        Parameters
+        ----------
+            image: np.ndarray
+                This is the image to detect barcodes and QR codes. This image
+                should be the cropped package image.
+
+        Returns
+        -------
 
         """
-        boxes, scores, labels = self.package_model.detect(image)
+        boxes, scores, labels = self.identification_model.detect(image)
+        if self.show:
+            image_drawn = Image.fromarray(image)
+            image_draw = ImageDraw.Draw(image_drawn)
 
-        print(f"{labels=}")
+        for box, score, label in zip(boxes, scores, labels):
+            if self.show:
+                draw_bounding_box(
+                    image_draw, ((box[0], box[1]), (box[2], box[3])))
 
-        # TODO: Return the frame with bounding boxes. Also draw if --show is enabled.
+            # Decode the barcodes and QR codes by passing a cropped image to 
+            # the zxing-cpp dependency.
+            image_copy = image.copy()
+            image_cropped = image_copy[box[1]:box[3], box[0]:box[2], :]
+            decodes = self.identification_model.decode(image_cropped)
+
+            # Assuming only one barcode/QR code was decoded because it is
+            # passing an image containing only one code.
+            decode = None
+            if len(decodes) > 0:
+                decode = decodes[0]
+
+            if self.show:
+                if label == 0:
+                    text = f"Barcode {round(score*100, 2)}"
+                elif label == 1:
+                    text = f"QR Code {round(score*100, 2)}"
+                else:
+                    text = f"{label} {round(score*100, 2)}"
+
+                if decode is not None:
+                    text += f"{decode.text}, {decode.format}, {decode.content_type}"
+
+                draw_text(image_draw, text, (box[0], box[1]-10), color="white")
+        
+        if self.show:
+            image = np.asarray(image_drawn)
+
+
+
+        # TODO: Return CodeImage objects
         return image, True
 
-
-def barcode_detector(image: Image) -> bool:
-    """
-    This function detects and decodes barcodes.
-
-    Parameters
-    ----------
-        image: Image
-            This is the class representation of the image to provide aspects
-            for storing barcode locations, barcode images, decoded barcodes, etc.
-
-    Returns
-    -------
-        True: If the image object contains barcodes.
-        False: If the image object does not contain barcodes.
-    """
-    
-    bd = cv2.barcode.BarcodeDetector()
-    _, decoded_info, _, detections = bd.detectAndDecodeWithType(image.image)
-
-    if detections is None:
-        image.hasBarcode = False
-        return False
-        
-    image.hasBarcode = True
-    if len(decoded_info):
-        image.add_barcode_decoded_info(decoded_info)
-    for detection in detections:
-        bounding_box = cv2.boundingRect(detection)
-        x,y,w,h = bounding_box
-        x = clamp_dimension(x, max=image.width, min=0)
-        y = clamp_dimension(y, max=image.height, min=0)
-        image.add_barcode_bounding_box([x,y,w,h])
-
-        # crop the image only around the detected barcode.
-        barcode_img = image.image[y:y+h, x:x+w].copy()
-        image.add_barcode_image(barcode_img)
-    return True
-
-def qrcode_detector(image: Image) -> bool:
-    """
-    This function detects and decodes QR codes.
-
-    Parameters
-    ----------
-        image: Image
-            This is the class representation of the image to provide aspects
-            for storing  QR code locations, QR code images, decoded QR codes, etc.
-
-    Returns
-    -------
-        True: If the image object contains QR codes.
-        False: If the image object does not contain QR codes.
-    """
-    qcd = cv2.QRCodeDetector()
-    _, decoded_info, poly_points, _ = qcd.detectAndDecodeMulti(image.image)
-
-    if poly_points is None:
-        image.hasQRCode = False
-        return False
-    
-    image.hasQRCode = True
-    if len(decoded_info):
-        image.add_qrcode_decoded_info(decoded_info)
-    for points in poly_points:
-        bounding_box = cv2.boundingRect(points)
-        x,y,w,h = bounding_box
-        x = clamp_dimension(x, max=image.width, min=0)
-        y = clamp_dimension(y, max=image.height, min=0)
-        image.add_qrcode_bounding_box([x,y,w,h])
-
-        # crop the image only around the detected barcode.
-        qrcode_img = image.image[y:y+h, x:x+w].copy()
-        image.add_qrcode_image(qrcode_img)
-    return True
 
 def text_detector(image: Image) -> bool:
     """

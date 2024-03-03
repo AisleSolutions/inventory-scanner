@@ -76,7 +76,7 @@ class GStreamer:
                 buffer=buffer.extract_dup(0, buffer.get_size()),
                 dtype=np.uint8)
         
-        image, ret = count_processor.process(image)
+        image, ret = count_processor.process_codes(image)
 
         # If ret = True, return False meaning streaming continues.
         return not ret
