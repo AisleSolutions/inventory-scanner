@@ -141,7 +141,7 @@ class OpenCVStreamer:
         """
         ret, image = self.cap.read()
         if ret:
-            image, ret = self.count_processor.process_codes(image)
+            image, ret = self.count_processor.process_packages(image)
 
             if self.show:
                 cv2.imshow("frame", image)

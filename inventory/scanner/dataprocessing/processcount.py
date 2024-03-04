@@ -88,9 +88,42 @@ class ProcessCount:
 
     def process_packages(self, image: np.ndarray):
         """
+        Thread 1: Detect Packages -> Crop Image -> Search for text in the detections.
+
+        Parameters
+        ----------
+            image: np.ndarray
+                This is the image to detect packages and texts. 
+
+        Returns
+        -------
+
         """
-        """Thread 1: Detect Packages -> Search for text in the detections."""
-        #boxes, scores, labels = self.package_detector.detect(image)
+        boxes, scores, labels = self.package_detector.detect(image)
+        if self.show:
+            image_drawn = Image.fromarray(image)
+            image_draw = ImageDraw.Draw(image_drawn)
+        
+        for box, score, label in zip(boxes, scores, labels):
+            box = box.astype(int)
+            if self.show:
+                draw_bounding_box(
+                    image_draw, ((box[0], box[1]), (box[2], box[3])))
+                
+            # Decode the barcodes and QR codes by passing a cropped image to 
+            # the zxing-cpp dependency.
+            image_copy = image.copy()
+            image_cropped = image_copy[box[1]:box[3], box[0]:box[2], :]
+            _, _, texts = self.text_detector.detect(image_cropped)
+
+            if self.show:
+                text = f"{label} {round(score*100, 2)} ".join(texts)
+                draw_text(image_draw, text, (box[0], box[1]-10), color="white")
+
+        if self.show:
+            image = np.asarray(image_drawn)
+
+        return image, True
 
     def process_codes(self, image: np.ndarray):
         """
@@ -144,34 +177,9 @@ class ProcessCount:
         if self.show:
             image = np.asarray(image_drawn)
 
-
-
         # TODO: Return CodeImage objects
         return image, True
 
-
-def shelf_detector(image: Image) -> bool:
-    """
-    This function detects if the image contains shelving. Features of the shelf
-    should include items if present and uniform horizontal lines. 
-
-    Parameters
-    ----------
-        image: Image
-            This is the class representation of the image to provide aspects
-            for storing shelving locations in the image, shelving image
-            arrays.
-
-    Returns
-    -------
-        True if the image contains shelving.
-        False if the image does not contain shelving.
-    """
-    # TODO: Implement this function.
-    # Perhaps look into the Hough Transforms for detecting lines in the image
-    # and decoding lines to be a pattern for shelving. 
-    # https://www.geeksforgeeks.org/line-detection-python-opencv-houghline-method/
-    # TODO: This needs to be a model.
 
 def vacant_slots_detector(image: Image) -> bool:
     """
@@ -193,25 +201,3 @@ def vacant_slots_detector(image: Image) -> bool:
     # TODO: Implement this function.
     # https://medium.com/analytics-vidhya/identifying-empty-shelf-spaces-using-template-matching-in-opencv-6be8d4caa80e
 
-def items_detector(image: Image) -> int:
-    """
-    This function should detect the number of items in a given image. This is
-    for sanity checking that the number of items counted from the 2D Lidar
-    matches with the number of items counted in this function. 
-
-    Parameters
-    ----------
-        image: Image
-            This is the class representation of the image to provide aspects
-            for the number of items counted in this function. Also this object
-            contains the numpy image array to process for image counting.
-
-    Returns
-    --------
-        0 if there are no items counted
-        An integer representing the number of items counted in the image.
-    """
-    # TODO: Implement this function.
-    # Try these solutions:
-    # 1) https://www.askpython.com/python/examples/count-objects-in-an-image
-    # 2) https://www.geeksforgeeks.org/count-number-of-object-using-python-opencv/
