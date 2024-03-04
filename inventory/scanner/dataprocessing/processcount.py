@@ -18,26 +18,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from inventory.scanner.runners import Parameters
 
-from inventory.scanner.runners import IdentificationModel, PackageModel
 from inventory.scanner.dataprocessing.utils import (
     draw_bounding_box,
     draw_text
 )
 from PIL import Image, ImageDraw
-#from autocorrect import Speller
 import numpy as np
-# import enchant
-# import easyocr
-
-
-
-"""This needs to run only once to load the model into memory."""
-# # This object detects texts in images.
-# reader = easyocr.Reader(['ch_sim','en']) 
-# # This object corrects the spelling in texts.
-# speller = Speller(lang='en')
-# # This object contains words in the English dictionary for correct spelling.
-# dictionary = enchant.Dict("en_US")
 
 
 class ProcessCount:
@@ -84,21 +70,27 @@ class ProcessCount:
             show: bool=False
         ) -> None:
         
-        self.package_model = PackageModel(
+        from inventory.scanner.runners import (
+            IdentificationDetector, 
+            PackageDetector, 
+            TextDetector
+        )
+        self.package_detector = PackageDetector(
             model=path_package_model,
             parameters=parameters
         )
-        self.identification_model = IdentificationModel(
+        self.identification_detector = IdentificationDetector(
             model=path_identification_model,
             parameters=parameters
         )
+        self.text_detector = TextDetector()
         self.show = show
 
     def process_packages(self, image: np.ndarray):
         """
         """
         """Thread 1: Detect Packages -> Search for text in the detections."""
-        #boxes, scores, labels = self.package_model.detect(image)
+        #boxes, scores, labels = self.package_detector.detect(image)
 
     def process_codes(self, image: np.ndarray):
         """
@@ -114,7 +106,7 @@ class ProcessCount:
         -------
 
         """
-        boxes, scores, labels = self.identification_model.detect(image)
+        boxes, scores, labels = self.identification_detector.detect(image)
         if self.show:
             image_drawn = Image.fromarray(image)
             image_draw = ImageDraw.Draw(image_drawn)
@@ -128,7 +120,7 @@ class ProcessCount:
             # the zxing-cpp dependency.
             image_copy = image.copy()
             image_cropped = image_copy[box[1]:box[3], box[0]:box[2], :]
-            decodes = self.identification_model.decode(image_cropped)
+            decodes = self.identification_detector.decode(image_cropped)
 
             # Assuming only one barcode/QR code was decoded because it is
             # passing an image containing only one code.
@@ -157,59 +149,6 @@ class ProcessCount:
         # TODO: Return CodeImage objects
         return image, True
 
-
-def text_detector(image: Image) -> bool:
-    """
-    This function detects and decodes text.
-
-    Parameters
-    ----------
-        image: Image
-            This is the class representation of the image to provide aspects
-            for storing text locations, text images, decoded texts, etc.
-
-    Returns
-    -------
-        True: If the image object contains text.
-        False: If the image object does not contain text.
-    """
-
-    # Use EasyOCR
-    # For each text process to remove special characters, lower case, and spell check
-    # Use pyenchant to check if the words are existing
-
-    detections = reader.readtext(image.image)
-    if detections is None:
-        image.hasText = False
-        return False
-
-    image.hasText = True
-    for detection in detections:
-        # The 3rd element is the score of the text.
-        location, text, _ = detection
-        # remove special characters and convert to lower characters
-        text = re.sub('\W+','', text).lower()
-        # autocorrect spelling
-        text = speller(text)
-        # check if the text is a valid word
-        if dictionary.check(text):
-            image.hasText = True
-            image.add_text(text)
-
-            location = [
-                location[0][0], 
-                location[0][1], 
-                location[2][0]-location[0][0], 
-                location[2][1]-location[0][1]
-            ]
-            # text bounding box
-            image.add_text_bounding_box(location)
-
-            x,y,w,h = location
-            # crop the image only around the detected barcode.
-            text_img = image.image[y:y+h, x:x+w].copy()
-            image.add_text_image(text_img)
-    return True
 
 def shelf_detector(image: Image) -> bool:
     """

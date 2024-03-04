@@ -23,7 +23,7 @@ from inventory.scanner.kerasretinanet import models
 import numpy as np
 
 
-class PackageModel:
+class PackageDetector:
     """
     This class provides methods for detecting packages in an image.
 

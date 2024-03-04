@@ -9,6 +9,7 @@
 # This source code is provided solely for runtime interpretation by Python.
 # Modifying or copying source code is explicitly forbidden. 
 
-from inventory.scanner.runners.codedetector import IdentificationModel
-from inventory.scanner.runners.packagedetector import PackageModel
+from inventory.scanner.runners.codedetector import IdentificationDetector
+from inventory.scanner.runners.packagedetector import PackageDetector
+from inventory.scanner.runners.textdetector import TextDetector
 from inventory.scanner.runners.parameters import Parameters

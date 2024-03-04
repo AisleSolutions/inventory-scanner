@@ -19,7 +19,8 @@ from inventory.scanner.dataprocessing.utils import validate_path
 import numpy as np
 import zxingcpp
 
-class IdentificationModel:
+
+class IdentificationDetector:
     """
     This class provides methods for detecting barcodes and QR codes using
     a detection model and then decoding the detections into their 

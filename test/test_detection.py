@@ -52,7 +52,33 @@ def test_barcode_qrcode_decoder():
         assert barcode.text == "705632441947"
         assert str(barcode.format) == "BarcodeFormat.UPCA"
         assert str(barcode.content_type) == "ContentType.Text"
-        
+
+def test_text_detector():
+    """
+    Test if the dependency is detecting text properly.
+    """
+    from inventory.scanner.runners import TextDetector
+    text_detector = TextDetector()
+
+    image = np.ascontiguousarray(Image.open(
+        os.path.join(os.path.dirname( __file__ ), 
+                     "samples/coffee_package_001.png")).convert('RGB'))
+    _, _, texts = text_detector.detect(image)
+    
+    expected = ['phil', 'sebastian', 'coffee', 'rosters', 'the', 'doppelganger', 'silk', 'comfortable', 'chocolate', 'ocfrebeans']
+    for text in texts:
+        assert text in expected
+    
+    image = np.ascontiguousarray(Image.open(
+        os.path.join(os.path.dirname( __file__ ), 
+                     "samples/coffee_package_002.png")).convert('RGB'))
+    _, _, texts = text_detector.detect(image)
+    
+    expected = ['phil', 'sebastian', 'coffee', 'rosters', 'little', 'sky', 'honduras', 'ncs', 'att', 'approachable', 'nuanced', 'us']
+    for text in texts:
+        assert text in expected
+    
+
 """
 To run:
 python -m pytest
