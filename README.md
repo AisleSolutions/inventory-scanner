@@ -4,10 +4,9 @@ packages and to classify each package by detecting existing facing barcodes
 or QR codes on the packages.
 *Note OpenCV or GStreamer is needed to run the application, please see the section [Supported Environments and Applications](#supported-environments-and-applications)* for more information for their installations as this could vary from system to system.
 
-# Problem/Use Case
-To efficiently and reliably track inventory changes in warehouses saving clients time and money from manual inventory tracking labour and possible errors. Package counts are generated classifying each package by the detected barcodes/QR codes or by the text that the algorithms detected on each package. Otherwise, images of the shelving are recorded for clients to visually inspect the count without the need for onsite inspection. 
-
 # Overview
+- [Problem/Use Case](#problemuse-case)
+- [Device Inventory Calibration Process](#device-inventory-calibration-process)
 - [Changelog](#changelog)
 - [Installation](#installation)
     - [Manual Installation](#manual-installation)
@@ -21,6 +20,60 @@ To efficiently and reliably track inventory changes in warehouses saving clients
     - [OpenCV Streaming](#opencv-streaming-option)
     - [GStreamer Streaming](#gstreamer-streaming-option)
 - [References](#references)
+
+# Problem/Use Case
+To efficiently and reliably track inventory changes in warehouses saving clients time and money from manual inventory tracking labour and possible errors. Package counts are generated classifying each package by the detected barcodes/QR codes or by the text that the algorithms detected on each package. Otherwise, images of the shelving are recorded for clients to visually inspect the count without the need for onsite inspection. 
+
+# Device-Inventory Calibration Process
+These steps are provided to allow the camera to be correctly oriented facing the shelving.
+
+**Move towards the shelving**
+
+![Shelving Detection Step 1 and 2](/doc/images/shelving_process_step_1.jpg)
+
+1) Use the streamers and continuously detect shelving in the environment.
+
+    * Determine angular direction of the shelving from the camera.
+
+2) Move the device towards the shelving.
+
+    * Orient the device to position in front of the shelving.
+
+**Device Positioning and Calibration**
+
+![Shelving Detection Step 3](/doc/images/shelving_process_step_3.jpg)
+
+3) Apply the known variables to position the device such that the edge of the shelf is inside the viewing angle of the camera.
+
+    * Camera viewing angle: Known
+
+    * 2DLidar distance of device from shelf: Known
+
+**Inventory Scanner Gather Package Counts**
+
+4) Take the frame that contains the shelf and process the frame to get the inventory count.
+
+5) Update the database.
+
+    * Package: Barcode/QR Code, Texts, Count
+
+    * Shelf Image (For manual verification).
+
+**Multiple Shelving Dimensions**
+
+![Shelving Detection Step 6](/doc/images/shelving_process_step_6.jpg)
+
+6) Recalibrate the camera (apply rotations and elevations) to capture frames of the shelf that was not included.
+
+7) Repeat steps 4 and 5.
+
+**Traversing the Length of the Shelf**
+
+![Shelving Detection Step 8](/doc/images/shelving_process_step_8.jpg)
+
+8) Move the device in the x-direction to capture the rest of the sections of the shelf.
+
+9) Repeat steps 4-7
 
 # Changelog
 *Date Release*: inventory-scanner 0.0.0: First Release
