@@ -7,6 +7,7 @@ or QR codes on the packages.
 # Overview
 - [Problem/Use Case](#problemuse-case)
 - [Device Inventory Calibration Process](#device-inventory-calibration-process)
+- [Device Inventory Counting Process](#device-inventory-counting-process)
 - [Changelog](#changelog)
 - [Installation](#installation)
     - [Manual Installation](#manual-installation)
@@ -51,7 +52,7 @@ These steps are provided to allow the camera to be correctly oriented facing the
 
 **Inventory Scanner Gather Package Counts**
 
-4) Take the frame that contains the shelf and process the frame to get the inventory count.
+4) Take the frame that contains the shelf and process the frame to get the inventory count. Details regarding this process is described in the next section.
 
 5) Update the database.
 
@@ -74,6 +75,10 @@ These steps are provided to allow the camera to be correctly oriented facing the
 8) Move the device in the x-direction to capture the rest of the sections of the shelf.
 
 9) Repeat steps 4-7
+
+# Device Inventory Counting Process
+
+![Counting Process](/doc/images/counting_process.jpg)
 
 # Changelog
 *Date Release*: inventory-scanner 0.0.0: First Release
@@ -182,8 +187,10 @@ python -m inventory.scanner -h
 python -m inventory.scanner 
     --camera=0 
     --application=opencv 
+    --show
     --package_model=inference-iou_resnet50_csv_06.h5 
     --identification_model=packages-best-99-fp16.tflite
+    --shelf_model=shelves-best-fp16-epoch-99.tflite
 ```
 
 ## GStreamer Streaming Option
@@ -191,7 +198,8 @@ python -m inventory.scanner
 ```shell
 python3 -m inventory.scanner 
     --package_model=inference-iou_resnet50_csv_06.h5  
-    --identification_model=/home/john/Repositories/barcode-best-fp16.tflite
+    --identification_model=barcode-best-fp16.tflite
+    --shelf_model=shelves-best-fp16-epoch-99.tflite
 ```
 
 ## GStreamer Stream Functionality Check
@@ -221,3 +229,4 @@ The installation process shown in the repository created the following files whi
 
 [3] The model for detecting barcodes and QR codes was trained using [YoloV5](https://github.com/ultralytics/yolov5). The dataset used to train the model was found in RoboFlow named as [barcodes-zmxjq_dataset](https://universe.roboflow.com/labeler-projects/barcodes-zmxjq). It is true that the dependency `zxing-cpp` is used to decode the barcodes and QR codes also provides positions of the detected codes. However, a size limit of the codes was observed to allow proper detections using this dependency alone. Smaller codes or samples that are far from the camera was detected using a trained model given that the dataset used to train this model had samples to overcome this difficulty. A decision was made to crop the detections from the trained model and pass those cropped images to the `zxing-cpp` dependency to decode the samples. 
 
+[4] The model for detecting shelves was trained using [YoloV5](https://github.com/ultralytics/yolov5). The dataset used to train the model was found in RoboFlow named as [shelves Dataset](https://universe.roboflow.com/shelfdetect-yzkro/shelves-ugxt3). This model was trained for 99 epochs and then converted into a TFLite model using `export.py` in YoloV5.

@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from inventory.scanner.dataprocessing import ProcessCount
+    from inventory.scanner.coordination import Coordinator
 
 from inventory.scanner import logger
 
@@ -34,6 +35,9 @@ class OpenCVStreamer:
 
         count_processor: ProcessCount
             This is the object to process the frames for package counts.
+        
+        coordinator: Coordinator
+            This is the object to handle device coordination to face the shelf.
 
         fps: int
             This is the frames per second to operate the stream.
@@ -49,12 +53,15 @@ class OpenCVStreamer:
             self,
             source: int=0,
             count_processor: ProcessCount=None,
+            coordinator: Coordinator=None,
             fps: int=30,
             resolution: tuple=(1920, 1080),
             show: bool=False
         ) -> None:
         self.source = source
         self.count_processor = count_processor
+        self.coordinator = coordinator
+        self._scan = False
         self.cap = self.open_camera(source)
         #self.cap = self.setup_cap(self.cap, resolution, fps) #NOSONAR
         self.show = show
@@ -62,6 +69,35 @@ class OpenCVStreamer:
             logger(
                 "Camera was not able to capture frames while initializing.",
                 code="ERROR")
+            
+    @property
+    def scan(self) -> bool:
+        """
+        Access the scan condition property.
+
+        Returns
+        -------
+            scan: bool
+                This is the condition whether to perform the inventory
+                scanning process for counting.
+
+                If this is False, this means the robot/device is still
+                performing alignment to the shelves.
+        """
+        return self._scan
+    
+    @scan.setter
+    def scan(self, new_scan: bool):
+        """
+        Set a new condition to the scanning property.
+
+        Parameters
+        ----------
+            new_scan: bool  
+                This property determines whether or not to perform inventory
+                scanning.
+        """
+        self._scan = new_scan
 
     @staticmethod
     def open_camera(source: int=0):
@@ -141,7 +177,11 @@ class OpenCVStreamer:
         """
         ret, image = self.cap.read()
         if ret:
-            image, ret = self.count_processor.process_packages(image)
+            if self.scan:
+                image, ret = self.count_processor.process_packages(image)
+            else:
+                # Perform motor commands to align the robot.
+                image, ret = self.coordinator.process(image)
 
             if self.show:
                 cv2.imshow("frame", image)

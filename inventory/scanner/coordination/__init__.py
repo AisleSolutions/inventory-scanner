@@ -9,8 +9,4 @@
 # This source code is provided solely for runtime interpretation by Python.
 # Modifying or copying source code is explicitly forbidden. 
 
-from inventory.scanner.runners.codedetector import IdentificationDetector
-from inventory.scanner.runners.packagedetector import PackageDetector
-from inventory.scanner.runners.shelfdetector import ShelfDetector
-from inventory.scanner.runners.textdetector import TextDetector
-from inventory.scanner.runners.parameters import Parameters
+from inventory.scanner.coordination.coordinate import Coordinator

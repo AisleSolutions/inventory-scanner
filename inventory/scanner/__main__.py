@@ -13,6 +13,7 @@
 
 from inventory.scanner.streamers import GStreamer, OpenCVStreamer
 from inventory.scanner.dataprocessing import ProcessCount
+from inventory.scanner.coordination import Coordinator
 from inventory.scanner.runners import Parameters
 from inventory.scanner import version
 import argparse
@@ -25,7 +26,6 @@ def start_application(args):
     ----------
         args: argsparse.NameSpace
             These are the command line arguments that was set.
-        
     """
     parameters = Parameters(
         detection_score=args.detection_score,
@@ -41,11 +41,17 @@ def start_application(args):
         parameters=parameters,
         show=args.show
     )
+    coordinator = Coordinator(
+        path_shelf_model=args.shelf_model,
+        parameters=parameters,
+        show=args.show
+    )
     
     if args.application.lower() == "gstreamer":
         streamer = GStreamer(
             source=args.camera,
-            count_processor=count_processor
+            count_processor=count_processor,
+            coordinator=coordinator
         )
         streamer.run()
     elif args.application.lower() == "opencv":
@@ -55,6 +61,7 @@ def start_application(args):
             streamer = OpenCVStreamer(
                 source=source,
                 count_processor=count_processor,
+                coordinator=coordinator,
                 fps=args.fps,
                 resolution=args.resolution,
                 show=args.show
@@ -103,7 +110,7 @@ def main():
                         help=("Set the resolution of the frame (width, height)."),
                         type=tuple,
                         default=(1920, 1080))
-    parser.add_argument("-s", "--show",
+    parser.add_argument("--show",
                         help=("Show the frame with the overlaid bounding boxes."),
                         action="store_true")
     parser.add_argument("--detection_score",
@@ -133,11 +140,15 @@ def main():
                         type=int,
                         default=0)
     parser.add_argument("-p", "--package_model",
-                        help=("Specify the path to the package model."),
+                        help=("The path to the KerasRetinanet package model."),
                         type=str,
                         required=True)
     parser.add_argument("-i", "--identification_model",
-                        help=("Specify the path to the barcode/QRCode model."),
+                        help=("The path to the TFLite barcode/QRCode model."),
+                        type=str,
+                        required=True)
+    parser.add_argument("-s", "--shelf_model",
+                        help=("The path to the TFLite shelf detection model."),
                         type=str,
                         required=True)
     args = parser.parse_args()

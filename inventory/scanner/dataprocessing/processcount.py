@@ -9,10 +9,6 @@
 # This source code is provided solely for runtime interpretation by Python.
 # Modifying or copying source code is explicitly forbidden. 
 
-"""
-This library contains functions that are responsible for detecting objects
-of interest given an image.
-"""
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -61,6 +57,10 @@ class ProcessCount:
         parameters: Parameters
             This contains the model parameters to control the model's
             behaviour.
+
+        show: bool
+            Specify whether to show the image with overlain bounding boxes
+            of the detections.
     """
     def __init__(
             self,
@@ -85,6 +85,10 @@ class ProcessCount:
         )
         self.text_detector = TextDetector()
         self.show = show
+
+    def process(self, image: np.ndarray):
+        """
+        """
 
     def process_packages(self, image: np.ndarray):
         """
@@ -179,25 +183,4 @@ class ProcessCount:
 
         # TODO: Return CodeImage objects
         return image, True
-
-
-def vacant_slots_detector(image: Image) -> bool:
-    """
-    This function detects if the image that has shelving contains vacant 
-    slots in the shelving or empty rows. See the link provided below for 
-    more information. This is useful for a quick check of zero items available.
-
-    Parameters
-    ----------
-        image: Image
-            This is the class representation of the image to provide aspects
-            for storing empty locations in the image.
-
-    Returns
-    -------
-        True if shelving has empty item slots.
-        False if the shelving is full/contains items.
-    """
-    # TODO: Implement this function.
-    # https://medium.com/analytics-vidhya/identifying-empty-shelf-spaces-using-template-matching-in-opencv-6be8d4caa80e
 

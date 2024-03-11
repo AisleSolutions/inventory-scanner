@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from inventory.scanner.dataprocessing import ProcessCount
+    from inventory.scanner.coordination import Coordinator
 
 from inventory.scanner import logger
 
@@ -39,17 +40,57 @@ class GStreamer:
 
         count_processor: ProcessCount
             This is the object to process the frames for package counts.
+
+        coordinator: Coordinator
+            This is the object to handle device coordination to face the shelf.
     """
     def __init__(
             self,
             source: str="/dev/video0",
-            count_processor: ProcessCount=None
+            count_processor: ProcessCount=None,
+            coordinator: Coordinator=None,
         ) -> None:
         self.source = source
+        self._scan = False
         self.count_processor = count_processor
+        self.coordinator = coordinator
+
+    @property
+    def scan(self) -> bool:
+        """
+        Access the scan condition property.
+
+        Returns
+        -------
+            scan: bool
+                This is the condition whether to perform the inventory
+                scanning process for counting.
+
+                If this is False, this means the robot/device is still
+                performing alignment to the shelves.
+        """
+        return self._scan
+    
+    @scan.setter
+    def scan(self, new_scan: bool):
+        """
+        Set a new condition to the scanning property.
+
+        Parameters
+        ----------
+            new_scan: bool  
+                This property determines whether or not to perform inventory
+                scanning.
+        """
+        self._scan = new_scan
 
     @staticmethod
-    def on_new_sample(app_sink, count_processor: ProcessCount) -> bool:
+    def on_new_sample(
+        app_sink, 
+        count_processor: ProcessCount, 
+        coordinator: Coordinator, 
+        scan: bool
+    ) -> bool:
         """
         This method pulls samples from the appsink.
 
@@ -57,6 +98,16 @@ class GStreamer:
         ----------
             app_sink: gi.repository.GstApp.AppSink
                 GStreamer sink to forward samples.
+
+            count_processor: ProcessCount
+            This is the object to process the frames for package counts.
+
+            coordinator: Coordinator
+                This is the object to handle device coordination to face the shelf.
+
+            scan: bool
+                Specify to perform inventory scanning, otherwise, device 
+                coordination is still in process.
 
         Returns
         -------
@@ -76,7 +127,10 @@ class GStreamer:
                 buffer=buffer.extract_dup(0, buffer.get_size()),
                 dtype=np.uint8)
         
-        image, ret = count_processor.process_codes(image)
+        if scan:
+            image, ret = count_processor.process_codes(image)
+        else:
+            image, ret = coordinator.process(image)
 
         # If ret = True, return False meaning streaming continues.
         return not ret
@@ -102,8 +156,10 @@ class GStreamer:
         
         appsink.connect("new-sample",
                         self.on_new_sample,
-                        self.count_processor
-                        )
+                        self.count_processor,
+                        self.coordinator,
+                        self.scan
+                    )
         
         pipeline.set_state(Gst.State.PLAYING)
         loop.run()

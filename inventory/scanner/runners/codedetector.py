@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from inventory.scanner.runners import Parameters
 
 from inventory.scanner.kerasretinanet.models.tflite import TFliteRunner
-from inventory.scanner.dataprocessing.utils import validate_path
 import numpy as np
 import zxingcpp
 
@@ -23,7 +22,7 @@ import zxingcpp
 class IdentificationDetector:
     """
     This class provides methods for detecting barcodes and QR codes using
-    a detection model and then decoding the detections into their 
+    a YoloV5 Tflite detection model and then decoding the detections into their 
     or number text representations.
 
     Parameters
@@ -41,9 +40,8 @@ class IdentificationDetector:
             parameters: Parameters
         ) -> None:
         
-        self.model = validate_path(model)
         self.loaded_model = TFliteRunner(
-            model=self.model,
+            model=model,
             parameters=parameters
         )
         self.parameters = parameters
