@@ -12,7 +12,7 @@
 """
 This module will contain helper functions for processing images.
 """
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from typing import Union
 import numpy as np
 import os
@@ -201,6 +201,28 @@ def compute_resize_scale(image_shape: tuple, min_side: int=800, max_side: int=13
     if largest_side * scale > max_side:
         scale = max_side / largest_side
     return scale
+
+def sharpen_image(image: np.ndarray, sharpen_iterations: int=1) -> np.ndarray:
+    """
+    This function sharpens the image based on number of iterations.
+
+    Parameters
+    ----------
+        image: np.ndarray
+            This is the image to sharpen.
+
+        sharpen_iterations: int
+            The number of times to sharpen the image.
+
+    Returns
+    -------
+        image: np.ndarray
+            The sharpened image.
+    """
+    image = Image.fromarray(image)
+    for _ in range(sharpen_iterations):
+        image = image.filter(ImageFilter.SHARPEN)
+    return np.asarray(image)
 
 def clamp_dimension(
         dimension: Union[float, int], 

@@ -157,6 +157,7 @@ class ProcessCount:
             # the zxing-cpp dependency.
             image_copy = image.copy()
             image_cropped = image_copy[box[1]:box[3], box[0]:box[2], :]
+
             decodes = self.identification_detector.decode(image_cropped)
 
             # Assuming only one barcode/QR code was decoded because it is

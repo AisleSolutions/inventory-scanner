@@ -113,6 +113,11 @@ def main():
     parser.add_argument("--show",
                         help=("Show the frame with the overlaid bounding boxes."),
                         action="store_true")
+    parser.add_argument("--sharpen",
+                        help=("Provide the number of times to sharpen the image. "
+                              "This is used to enhance detected barcode/QR code images."),
+                        type=int,
+                        default=0)
     parser.add_argument("--detection_score",
                         help=("The score threshold to set for the NMS."),
                         type=float,

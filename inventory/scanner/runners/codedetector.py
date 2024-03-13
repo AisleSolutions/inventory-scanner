@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from inventory.scanner.runners import Parameters
 
 from inventory.scanner.kerasretinanet.models.tflite import TFliteRunner
+from inventory.scanner.dataprocessing.utils import sharpen_image
 import numpy as np
 import zxingcpp
 
@@ -101,4 +102,7 @@ class IdentificationDetector:
                 This list contains zxingcpp.Result objects with attributes
                 text, format, content, position.
         """
+        # Sharpen the image for better decoding.
+        if self.parameters.sharpen > 0:
+            image = sharpen_image(image, self.parameters.sharpen)
         return zxingcpp.read_barcodes(image)

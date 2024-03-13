@@ -44,7 +44,8 @@ class Parameters:
         acceptance_score: float = 0.25,
         max_detections: int = 300,
         normalization: str = "unsigned",
-        warmup: int = 0
+        warmup: int = 0,
+        sharpen: int = 0
     ) -> None:
         
         self._detection_score = detection_score
@@ -53,6 +54,7 @@ class Parameters:
         self._max_detections = max_detections
         self._normalization = normalization
         self._warmup = warmup
+        self._sharpen = sharpen
 
     @property
     def detection_score(self) -> float:
@@ -200,4 +202,27 @@ class Parameters:
         """
         self._warmup = num
 
+    @property
+    def sharpen(self) -> int:
+        """
+        Access the sharpen property.
+
+        Returns
+        -------
+            sharpen: int
+                This is the number of times to sharpen the barcode/QR code image
+                detections for better chance of decoding. 
+        """
+        return self._sharpen
     
+    @sharpen.setter
+    def sharpen(self, num: int):
+        """
+        Set a new value to the sharpen parameter.
+
+        Parameters
+        ----------
+            num: int
+                This new value to set for the sharpen.
+        """
+        self._sharpen = num

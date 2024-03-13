@@ -6,3 +6,4 @@ zxing-cpp~=2.2.0
 easyocr~=1.7.1
 autocorrect~=2.6.1
 pyenchant~=3.2.2
+stitching~=0.5.3
