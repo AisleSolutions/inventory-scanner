@@ -14,7 +14,6 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 from autocorrect import Speller
 from typing import Tuple
 import numpy as np
-import enchant
 import easyocr
 import re
 
@@ -29,8 +28,6 @@ class TextDetector:
         self.reader = easyocr.Reader(['ch_sim','en']) 
         # This object corrects the spelling in texts.
         self.speller = Speller(lang='en')
-        # This object contains words in the English dictionary for correct spelling.
-        self.dictionary = enchant.Dict("en_US")
 
     def detect(self, image: np.ndarray) -> Tuple[list, list, list]:
         """
@@ -55,6 +52,7 @@ class TextDetector:
             texts: list
                 This contains the string text detections.
         """
+        height, width, _ = image.shape
         boxes, scores, texts = list(), list(), list()
         detections = self.reader.readtext(image)
         if detections is None:
@@ -71,7 +69,6 @@ class TextDetector:
                 continue
 
             # Check if the text is a valid word.
-            #if self.dictionary.check(text):
             if score > 0.08:
                 # Store in the format [xmin, ymin, xmax, ymax].
                 box = [
@@ -83,5 +80,12 @@ class TextDetector:
                 boxes.append(box)
                 scores.append(score)
                 texts.append(text)
-            
+        
+        boxes = np.array(boxes)
+        boxes[..., 0] = boxes[..., 0] / width
+        boxes[..., 1] = boxes[..., 1] / height
+        boxes[..., 2] = boxes[..., 2] / width
+        boxes[..., 3] = boxes[..., 3] / height
+        scores = np.array(scores)
+
         return boxes, scores, texts

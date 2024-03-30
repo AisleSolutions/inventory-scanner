@@ -9,5 +9,12 @@
 # This source code is provided solely for runtime interpretation by Python.
 # Modifying or copying source code is explicitly forbidden. 
 
-from inventory.scanner.dataprocessing.inventoryimage import InventoryImage
+from inventory.scanner.dataprocessing.inventoryimage import (
+    InventoryImage,
+    PackageImage,
+    ShelfImage,
+)
+from inventory.scanner.dataprocessing.matchdetections import MatchDetections
+from inventory.scanner.dataprocessing.categorizetext import CategorizeText
 from inventory.scanner.dataprocessing.processcount import ProcessCount
+from inventory.scanner.dataprocessing.processthread import DataThread

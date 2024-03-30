@@ -16,7 +16,33 @@ from inventory.scanner.dataprocessing import ProcessCount
 from inventory.scanner.coordination import Coordinator
 from inventory.scanner.runners import Parameters
 from inventory.scanner import version
+from inventory.scanner import logger
 import argparse
+import os
+
+
+def simulate(process_count: ProcessCount):
+    """
+    """
+    from inventory.scanner.dataprocessing import ShelfImage
+    from PIL import Image
+    import numpy as np
+    import os
+
+    images = [
+        "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/market_2/market_quad1.png",
+        "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/market_2/market_quad2.png",
+        "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/market_2/market_quad3.png",
+        "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/market_2/market_quad4.png",
+    ]
+    shelf_image = ShelfImage()
+
+    for image in images:
+        image = np.ascontiguousarray(Image.open(image).convert('RGB'))
+        shelf_image._shelf_segments.append(image)
+
+    process_count.process(shelf_image)
+    
 
 def start_application(args):
     """
@@ -35,12 +61,23 @@ def start_application(args):
         normalization=args.normalization,
         warmup=args.warmup
     )
+
+    if isinstance(args.results_out, str):
+        if not os.path.exists(args.results_out):
+            logger(f"{args.results_out} does not exist, creating the directories.", 
+                   code="INFO")
+            os.makedirs(args.results_out)
+
     count_processor = ProcessCount(
         path_package_model=args.package_model,
         path_identification_model=args.identification_model,
         parameters=parameters,
-        show=args.show
+        show=args.show,
+        results_out=args.results_out
     )
+    simulate(count_processor)
+
+    exit(1)
     coordinator = Coordinator(
         path_shelf_model=args.shelf_model,
         parameters=parameters,
@@ -113,6 +150,9 @@ def main():
     parser.add_argument("--show",
                         help=("Show the frame with the overlaid bounding boxes."),
                         action="store_true")
+    parser.add_argument("--results_out",
+                        help=("Path to store the CSV and image bounding box overlays."),
+                        type=str)
     parser.add_argument("--sharpen",
                         help=("Provide the number of times to sharpen the image. "
                               "This is used to enhance detected barcode/QR code images."),

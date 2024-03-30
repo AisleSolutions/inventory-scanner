@@ -16,80 +16,6 @@ from PIL import Image
 import numpy as np
 import os
 
-class PackageImage:
-    """
-    This class represents image cropped to contain only a single package.
-    Any text or barcode/QRCode detected on the package is stored here.
-    """
-    pass
-
-class ShelfImage:
-    """
-    This class represents image cropped to contain a single shelf on a warehouse.
-    This image will show the individual items on the shelf for visual 
-    inspection.
-
-    Parameters
-    ----------
-        detector: str
-            Set the detector type for the image stitcher.
-
-        confidence_threshold: float
-            Set the confidence threshold when stitching images.
-    """
-    def __init__(
-            self,
-            detector: str = "sift",
-            confidence_threshold: float = 0.10
-        ) -> None:
-
-        self._shelf_segments = list()
-        self.stitcher = Stitcher(
-            detector=detector, confidence_threshold=confidence_threshold)
-
-    @property
-    def shelf_segments(self) -> list:
-        """
-        Access the shelf_segments property.
-
-        Returns
-        -------
-            shelf_segments: list
-                This contains the list of numpy arrays of images that are 
-                part of the shelving. This list of images is to be stitched
-                into a single image.
-        """
-        return self._shelf_segments
-    
-    @shelf_segments.setter
-    def shelf_segments(self, segments: list):
-        """
-        Set a new value to the shelf_segments parameter.
-
-        Parameters
-        ----------
-            segments: list
-                This new value to set for the shelf_segments.
-        """
-        self._shelf_segments = segments
-
-    def stitch_images(self):
-        """
-        This method stitches the shelf segments images that are collected.
-        If there are no images collected, it will return None.
-
-        Returns
-        -------
-            image: np.ndarray
-                A stitched image.
-
-            None: if no shelf segments were collected in the object.
-        """
-        if len(self.shelf_segments) > 0:
-            panorama = self.stitcher.stitch(self.shelf_segments)
-            return panorama
-        return None
-
 class InventoryImage:
     """
     Class representation of an image which provides the numpy array 
@@ -227,9 +153,91 @@ class InventoryImage:
         template = "Image(image_path={image_path})"
         return template.format(image_path=self._path)
 
+class PackageImage:
+    """
+    This class represents image cropped to contain only a single package.
+    Any text or barcode/QRCode detected on the package is stored here.
+    """
+    def __init__(self, label: str="Unlabeled") -> None:
+        self._label = label
+        self._count = 0
+        self._boxes = list()
+        self._descriptors = list()
+
+
+
+
+class ShelfImage:
+    """
+    This class represents image cropped to contain a single shelf on a warehouse.
+    This image will show the individual items on the shelf for visual 
+    inspection.
+
+    Parameters
+    ----------
+        detector: str
+            Set the detector type for the image stitcher.
+
+        confidence_threshold: float
+            Set the confidence threshold when stitching images.
+    """
+    def __init__(
+            self,
+            detector: str = "sift",
+            confidence_threshold: float = 0.05
+        ) -> None:
+
+        self._shelf_segments = list()
+        self.stitcher = Stitcher(
+            detector=detector, confidence_threshold=confidence_threshold)
+
+    @property
+    def shelf_segments(self) -> list:
+        """
+        Access the shelf_segments property.
+
+        Returns
+        -------
+            shelf_segments: list
+                This contains the list of numpy arrays of images that are 
+                part of the shelving. This list of images is to be stitched
+                into a single image.
+        """
+        return self._shelf_segments
+    
+    @shelf_segments.setter
+    def shelf_segments(self, segments: list):
+        """
+        Set a new value to the shelf_segments parameter.
+
+        Parameters
+        ----------
+            segments: list
+                This new value to set for the shelf_segments.
+        """
+        self._shelf_segments = segments
+
+    def stitch_images(self):
+        """
+        This method stitches the shelf segments images that are collected.
+        If there are no images collected, it will return None. First collect
+        the stitched images ShelfImage.shelf_segments.append(image: np.ndarray).
+
+        Returns
+        -------
+            image: np.ndarray
+                A stitched image.
+
+            None: if no shelf segments were collected in the object.
+        """
+        if len(self.shelf_segments) > 0:
+            panorama = self.stitcher.stitch(self.shelf_segments)
+            return panorama
+        return None
+    
 if __name__ == '__main__':
     home_directory = os.path.join( os.path.dirname( __file__ ), '..' )
-    image = Image(os.path.join(home_directory, 'test/samples/barcode_001.jpg'))
+    image = InventoryImage(os.path.join(home_directory, 'test/samples/barcode_001.jpg'))
     
     print(f"image height = {image.height}")
     print(f"image width = {image.width}")

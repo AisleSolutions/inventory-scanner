@@ -82,7 +82,12 @@ class PackageDetector:
         scores = scores[0][indices]
         labels = labels[0][indices]
 
+        height, width, _ = image.shape
         # Correct image scaling.
         boxes /= scale
+        boxes[..., 0] = boxes[..., 0] / width
+        boxes[..., 1] = boxes[..., 1] / height
+        boxes[..., 2] = boxes[..., 2] / width
+        boxes[..., 3] = boxes[..., 3] / height
 
         return boxes, scores, labels
