@@ -231,4 +231,4 @@ The installation process shown in the repository created the following files whi
 
 [4] The model for detecting shelves was trained using [YoloV5](https://github.com/ultralytics/yolov5). The dataset used to train the model was found in RoboFlow named as [shelves Dataset](https://universe.roboflow.com/shelfdetect-yzkro/shelves-ugxt3). This model was trained for 99 epochs and then converted into a TFLite model using `export.py` in YoloV5.
 
-[5] Deepview-validator Matching and TFLite
+[5] [Deepview-validator](https://pypi.org/project/deepview-validator/) TFlite Runner was used to allow inferencing of TFLite models trained from YoloV5. Furthermore, used deepview-validator's matching algorithm which returns the indices of best matches when passed two sets of bounding boxes. 

@@ -16,6 +16,7 @@ from PIL import Image
 import numpy as np
 import os
 
+
 class InventoryImage:
     """
     Class representation of an image which provides the numpy array 
@@ -163,9 +164,6 @@ class PackageImage:
         self._count = 0
         self._boxes = list()
         self._descriptors = list()
-
-
-
 
 class ShelfImage:
     """
