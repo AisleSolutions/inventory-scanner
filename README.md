@@ -188,18 +188,18 @@ python -m inventory.scanner
     --camera=0 
     --application=opencv 
     --show
-    --package_model=inference-iou_resnet50_csv_06.h5 
+    --package_model=packages-best-99-fp16.tflite
     --identification_model=packages-best-99-fp16.tflite
-    --shelf_model=shelves-best-fp16-epoch-99.tflite
+    --shelf_model=shelves-best-fp16-99-epochs.tflite
 ```
 
 ## GStreamer Streaming Option
 
 ```shell
 python3 -m inventory.scanner 
-    --package_model=inference-iou_resnet50_csv_06.h5  
+    --package_model=packages-best-99-fp16.tflite
     --identification_model=barcode-best-fp16.tflite
-    --shelf_model=shelves-best-fp16-epoch-99.tflite
+    --shelf_model=shelves-best-fp16-99-epochs.tflite
 ```
 
 ## GStreamer Stream Functionality Check

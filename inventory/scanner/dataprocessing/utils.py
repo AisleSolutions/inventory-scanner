@@ -275,10 +275,11 @@ def draw_bounding_box(
         width: int
             This is the width of the lines of the bounding box.
     """
-    image_draw.rectangle(
-        box,
-        outline=color,
-        width=width)
+    if (box[0][0] < box[1][0]) and (box[0][1] < box[1][1]):
+        image_draw.rectangle(
+            box,
+            outline=color,
+            width=width)
     
 def draw_text(
         image_draw: ImageDraw.ImageDraw,

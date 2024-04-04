@@ -182,7 +182,7 @@ class ShelfImage:
     def __init__(
             self,
             detector: str = "sift",
-            confidence_threshold: float = 0.05
+            confidence_threshold: float = 0.2
         ) -> None:
 
         self._shelf_segments = list()

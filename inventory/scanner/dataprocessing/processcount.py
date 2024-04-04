@@ -10,7 +10,7 @@
 # Modifying or copying source code is explicitly forbidden. 
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from inventory.scanner.dataprocessing import ShelfImage
     from inventory.scanner.runners import Parameters
@@ -23,6 +23,7 @@ from inventory.scanner.dataprocessing.matchdetections import MatchDetections
 from inventory.scanner.dataprocessing.categorizetext import CategorizeText
 from inventory.scanner.dataprocessing.inventoryimage import PackageImage
 from inventory.scanner.dataprocessing.processthread import DataThread
+from inventory.scanner import logger
 from PIL import Image, ImageDraw
 import numpy as np
 import os
@@ -101,7 +102,7 @@ class ProcessCount:
 
     def process(
             self, 
-            shelf_image: ShelfImage,
+            shelf_image: Union[ShelfImage, np.ndarray],
             detect_code: bool=False,
         ):
         """
@@ -111,15 +112,24 @@ class ProcessCount:
 
         Parameters
         ----------
-            shelf_image: ShelfImage
+            shelf_image: ShelfImage, np.ndarray
                 The object that contains the image segments of the shelving
                 to stitch and process for counts.
+                If a numpy array is passed, then do not stitch the image, but
+                process it only.
 
             detect_code: bool
                 If this is true, identify packages by their QRCodes or Barcodes.
                 Otherwise identify them by their texts.
         """
-        shelf_panorama = shelf_image.stitch_images()
+
+        if isinstance(shelf_image, np.ndarray):
+            shelf_panorama = shelf_image
+        else:
+            shelf_panorama = shelf_image.stitch_images()
+            if shelf_panorama is None:
+                logger("Stitched image returned None.", code="WARNING")
+                return
 
         """Thread 1 Detect packages"""
         package_thread = DataThread(
@@ -170,38 +180,49 @@ class ProcessCount:
 
         else:
             """Thread 5 Match packages to texts"""
-            match_package_text = MatchDetections(
-                ground_truths=package_boxes,
-                predictions=text_boxes,
-            )
-            match_text_thread = DataThread(
-                target=match_package_text.match, args=())
-            
-            text_classifier = CategorizeText(texts, text_boxes)
-            text_classifier_thread = DataThread(
-                target=text_classifier.categorize_by_common_text, args=()
-            )
-            
-            match_text_thread.start()
-            text_classifier_thread.start()
+            if len(package_boxes) > 0 and len(text_boxes) > 0:
+                match_package_text = MatchDetections(
+                    ground_truths=package_boxes,
+                    predictions=text_boxes,
+                )
+                match_text_thread = DataThread(
+                    target=match_package_text.match, args=())
+                
+                text_classifier = CategorizeText(texts, text_boxes)
+                text_classifier_thread = DataThread(
+                    target=text_classifier.categorize_by_common_text, args=()
+                )
+                
+                match_text_thread.start()
+                text_classifier_thread.start()
 
-            """Join Threads"""
-            match_text_thread.join()
-            text_classifier_thread.join()
+                """Join Threads"""
+                match_text_thread.join()
+                text_classifier_thread.join()
 
-            """
-            Categorize text detected, create PackageImage based on the text 
-            category. Collect packages with the same text category.
-            """
-            collected_packages = self.process_text_counts(
-                match_package_text, text_classifier)
+                """
+                Categorize text detected, create PackageImage based on the text 
+                category. Collect packages with the same text category.
+                """
+                collected_packages = self.process_text_counts(
+                    match_package_text, text_classifier)
 
-            if self.results_out is not None:
-                self.save_csv(collected_packages)
-                if self.show:
-                    self.visualize(shelf_panorama, package_boxes, text_boxes, texts)
-        
+                if self.results_out is not None:
+                    self.save_csv(collected_packages)
+                    shelf_panorama = self.visualize(
+                        shelf_panorama, package_boxes, text_boxes, texts)
+
+                if self.show and self.results_out is None:
+                    self.save_csv(collected_packages, save=False)
+                    shelf_panorama = self.visualize(
+                        shelf_panorama, 
+                        package_boxes, 
+                        text_boxes, 
+                        texts, 
+                        save=False)
+
         self.shelf_id += 1
+        return shelf_panorama
 
     def process_text_counts(
             self, 
@@ -300,8 +321,9 @@ class ProcessCount:
         image: np.ndarray, 
         package_boxes: np.ndarray, 
         label_boxes: np.ndarray, 
-        labels: list
-    ):
+        labels: list,
+        save: bool=True
+    ) -> np.ndarray:
         """
         Visualizes the detected packages and the texts into an image with
         bounding box and text overlays describing the scenario. Saves the image
@@ -320,6 +342,14 @@ class ProcessCount:
 
             labels: list
                 This contains the detected texts or decoded information.
+
+            save: bool
+                Specify whether to save the image as a numpy file.
+
+        Returns
+        -------
+            image: np.ndarray
+                The image with drawn bounding boxes.
         """
         height, width, _ = image.shape
 
@@ -350,10 +380,12 @@ class ProcessCount:
                 image_draw, ((box[0], box[1]), (box[2], box[3])))
             draw_text(image_draw, label, (box[0], box[1]-10), color="black")
        
-        image_drawn.save(os.path.join(self.results_out, 
-                                      f"shelf_{self.shelf_id}.png"))
+        if save:
+            image_drawn.save(os.path.join(self.results_out, 
+                                        f"shelf_{self.shelf_id}.png"))
+        return np.asarray(image_drawn)
 
-    def save_csv(self, collected_packages: list):
+    def save_csv(self, collected_packages: list, save: bool=True):
         """
         Saves the package count results as a CSV.
 
@@ -362,14 +394,20 @@ class ProcessCount:
             collected_packages: list
                 This contains PackageImage objects storing the counts and the
                 package labels.
+
+            save: bool
+                Specify whether to save the image as a numpy file.
         """
         labels, counts = list(), list()
         for package in collected_packages:
             package: PackageImage
+            print(f"{package._label}: {package._count}")
             labels.append(package._label)
             counts.append(package._count)
+        print("\n")
 
-        np.savetxt(os.path.join(self.results_out, f"shelf_{self.shelf_id}.csv"), 
-                   [p for p in zip(labels, counts)], 
-                   delimiter=',', 
-                   fmt='%s')
+        if save:
+            np.savetxt(os.path.join(self.results_out, f"shelf_{self.shelf_id}.csv"), 
+                    [p for p in zip(labels, counts)], 
+                    delimiter=',', 
+                    fmt='%s')

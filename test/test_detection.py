@@ -14,6 +14,7 @@ import numpy as np
 import zxingcpp
 import os
 
+
 def test_barcode_qrcode_decoder():
     """
     Test if the dependency is detecting barcodes and QR codes properly.

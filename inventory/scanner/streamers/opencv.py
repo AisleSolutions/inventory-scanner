@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from inventory.scanner.dataprocessing import ProcessCount
     from inventory.scanner.coordination import Coordinator
 
+from inventory.scanner.dataprocessing import ShelfImage
 from inventory.scanner import logger
 
 try:
@@ -61,7 +62,9 @@ class OpenCVStreamer:
         self.source = source
         self.count_processor = count_processor
         self.coordinator = coordinator
-        self._scan = False
+        self._scan = True
+        self.shelf_image = ShelfImage()
+
         self.cap = self.open_camera(source)
         #self.cap = self.setup_cap(self.cap, resolution, fps) #NOSONAR
         self.show = show
@@ -178,10 +181,20 @@ class OpenCVStreamer:
         ret, image = self.cap.read()
         if ret:
             if self.scan:
-                image, ret = self.count_processor.process_packages(image)
+                # To perform stitching, pass `self.shelf_image` instead.
+                image = self.count_processor.process(image)
+                self.scan = False
             else:
                 # Perform motor commands to align the robot.
-                image, ret = self.coordinator.process(image)
+                image, has_shelving = self.coordinator.process(image)
+                # If the camera sees shelving, then store the images to stitch.
+                if has_shelving:
+                    # This code stores the shelving to be stitched.
+                    #self.shelf_image._shelf_segments.append(image)
+                    self.scan = True
+                # Once the camera stops seeing shelving, start scanning.
+                else:
+                    self.scan = False
 
             if self.show:
                 cv2.imshow("frame", image)

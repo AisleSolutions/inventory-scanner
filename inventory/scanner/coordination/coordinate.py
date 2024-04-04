@@ -60,6 +60,7 @@ class Coordinator:
     def process(self, image: np.ndarray):
         """
         """
+        has_shelving = False
         boxes, scores, labels = self.shelf_detector.detect(image)
 
         if self.show:
@@ -82,4 +83,6 @@ class Coordinator:
         if self.show:
             image = np.asarray(image_drawn)
 
-        return image, True
+        if len(boxes) > 0:
+            has_shelving = True
+        return image, has_shelving

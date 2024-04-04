@@ -10,7 +10,7 @@
 # Modifying or copying source code is explicitly forbidden. 
 
 from threading import Thread
-
+import numpy as np
 
 class DataThread(Thread):
     """
@@ -25,7 +25,7 @@ class DataThread(Thread):
                  args=(), kwargs={}):
         Thread.__init__(
             self, group=group, target=target, name=name, args=args, kwargs=kwargs)
-        self._return = None
+        self._return = np.ndarray([]), np.ndarray([]), np.ndarray([])
     def run(self):
         if self._target is not None:
             self._return = self._target(*self._args,

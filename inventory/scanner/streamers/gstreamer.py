@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from inventory.scanner.dataprocessing import ProcessCount
     from inventory.scanner.coordination import Coordinator
 
+from inventory.scanner.dataprocessing import ShelfImage
 from inventory.scanner import logger
 
 try:
@@ -54,6 +55,7 @@ class GStreamer:
         self._scan = False
         self.count_processor = count_processor
         self.coordinator = coordinator
+        self.shelf_image = ShelfImage()
 
     @property
     def scan(self) -> bool:
@@ -89,7 +91,8 @@ class GStreamer:
         app_sink, 
         count_processor: ProcessCount, 
         coordinator: Coordinator, 
-        scan: bool
+        shelf_image: ShelfImage,
+        scan: bool,
     ) -> bool:
         """
         This method pulls samples from the appsink.
@@ -104,6 +107,9 @@ class GStreamer:
 
             coordinator: Coordinator
                 This is the object to handle device coordination to face the shelf.
+
+            shelf_image: ShelfImage
+                Object that contains the images of detected shelves.
 
             scan: bool
                 Specify to perform inventory scanning, otherwise, device 
@@ -126,14 +132,23 @@ class GStreamer:
                 (height, width, channels),
                 buffer=buffer.extract_dup(0, buffer.get_size()),
                 dtype=np.uint8)
-        
+
+        # TODO scan as global variable instead.
         if scan:
-            image, ret = count_processor.process_codes(image)
+            count_processor.process(shelf_image)
+            scan = False
         else:
-            image, ret = coordinator.process(image)
+            # Perform motor commands to align the robot.
+            image, has_shelving = coordinator.process(image)
+            # If the camera sees shelving, then store the images to stitch.
+            if has_shelving:
+                shelf_image._shelf_segments.append(image)
+            # Once the camera stops seeing shelving, start scanning.
+            else:
+                scan = True
 
         # If ret = True, return False meaning streaming continues.
-        return not ret
+        return False
     
     def run(self):
         """
@@ -158,6 +173,7 @@ class GStreamer:
                         self.on_new_sample,
                         self.count_processor,
                         self.coordinator,
+                        self.shelf_image,
                         self.scan
                     )
         

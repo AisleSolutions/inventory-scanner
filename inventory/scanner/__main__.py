@@ -27,21 +27,27 @@ def simulate(process_count: ProcessCount):
     from inventory.scanner.dataprocessing import ShelfImage
     from PIL import Image
     import numpy as np
+    import glob
     import os
 
-    images = [
-        "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/market_2/market_quad1.png",
-        "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/market_2/market_quad2.png",
-        "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/market_2/market_quad3.png",
-        "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/market_2/market_quad4.png",
-    ]
-    shelf_image = ShelfImage()
+    images = glob.glob(os.path.join("C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/synthetic_4","*.jpg"))
 
-    for image in images:
-        image = np.ascontiguousarray(Image.open(image).convert('RGB'))
-        shelf_image._shelf_segments.append(image)
+    shelf_panorama = Image.open("C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/synthetic_6/show_all.jpg")
+    shelf_panorama = np.asarray(shelf_panorama)
 
-    process_count.process(shelf_image)
+    # if len(images) == 0:
+    #     raise RuntimeError("No images found")
+    # # images = [
+    # #     "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/synthetic/shelf_1.jpg",
+    # #     "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/synthetic/shelf_2.jpg",
+    # # ]
+    # shelf_image = ShelfImage()
+
+    # for image in images:
+    #     image = np.ascontiguousarray(Image.open(image).convert('RGB'))
+    #     shelf_image._shelf_segments.append(image)
+
+    process_count.process(shelf_panorama)
     
 
 def start_application(args):
@@ -75,9 +81,9 @@ def start_application(args):
         show=args.show,
         results_out=args.results_out
     )
-    simulate(count_processor)
+    # simulate(count_processor)
 
-    exit(1)
+    # exit(1)
     coordinator = Coordinator(
         path_shelf_model=args.shelf_model,
         parameters=parameters,
@@ -169,7 +175,7 @@ def main():
     parser.add_argument("--acceptance_score",
                         help=("The score threshold to consider as valid detections."),
                         type=float,
-                        default=0.60)
+                        default=0.10)
     parser.add_argument("--normalization",
                         help=("The type of image normalization to perform."),
                         choices=["signed", "unsigned", "raw"],

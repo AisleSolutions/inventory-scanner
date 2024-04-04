@@ -55,7 +55,7 @@ class TextDetector:
         height, width, _ = image.shape
         boxes, scores, texts = list(), list(), list()
         detections = self.reader.readtext(image)
-        if detections is None:
+        if detections is None or len(detections) == 0:
             return boxes, scores, texts
 
         for detection in detections:
@@ -81,7 +81,7 @@ class TextDetector:
                 scores.append(score)
                 texts.append(text)
         
-        boxes = np.array(boxes)
+        boxes = np.array(boxes).astype(np.float32)
         boxes[..., 0] = boxes[..., 0] / width
         boxes[..., 1] = boxes[..., 1] / height
         boxes[..., 2] = boxes[..., 2] / width
