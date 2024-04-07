@@ -11,7 +11,6 @@
 
 from inventory.scanner.dataprocessing.inventoryimage import (
     InventoryImage,
-    PackageImage,
     ShelfImage,
 )
 from inventory.scanner.dataprocessing.matchdetections import MatchDetections

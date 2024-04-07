@@ -21,35 +21,6 @@ import argparse
 import os
 
 
-def simulate(process_count: ProcessCount):
-    """
-    """
-    from inventory.scanner.dataprocessing import ShelfImage
-    from PIL import Image
-    import numpy as np
-    import glob
-    import os
-
-    images = glob.glob(os.path.join("C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/synthetic_4","*.jpg"))
-
-    shelf_panorama = Image.open("C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/synthetic_6/show_all.jpg")
-    shelf_panorama = np.asarray(shelf_panorama)
-
-    # if len(images) == 0:
-    #     raise RuntimeError("No images found")
-    # # images = [
-    # #     "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/synthetic/shelf_1.jpg",
-    # #     "C:/Users/johns/Documents/EngineeringCapstone/inventory-scanner/test/stitching/synthetic/shelf_2.jpg",
-    # # ]
-    # shelf_image = ShelfImage()
-
-    # for image in images:
-    #     image = np.ascontiguousarray(Image.open(image).convert('RGB'))
-    #     shelf_image._shelf_segments.append(image)
-
-    process_count.process(shelf_panorama)
-    
-
 def start_application(args):
     """
     This function starts the inventory scanner application.
@@ -81,9 +52,7 @@ def start_application(args):
         show=args.show,
         results_out=args.results_out
     )
-    # simulate(count_processor)
 
-    # exit(1)
     coordinator = Coordinator(
         path_shelf_model=args.shelf_model,
         parameters=parameters,
@@ -153,6 +122,10 @@ def main():
                         help=("Set the resolution of the frame (width, height)."),
                         type=tuple,
                         default=(1920, 1080))
+    parser.add_argument("--stitch",
+                        help=("Perform stitching of the image to avoid "
+                              "package double counting."),
+                        action="store_true")
     parser.add_argument("--show",
                         help=("Show the frame with the overlaid bounding boxes."),
                         action="store_true")

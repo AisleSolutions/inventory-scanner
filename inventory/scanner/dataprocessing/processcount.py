@@ -21,8 +21,8 @@ from inventory.scanner.dataprocessing.utils import (
 )
 from inventory.scanner.dataprocessing.matchdetections import MatchDetections
 from inventory.scanner.dataprocessing.categorizetext import CategorizeText
-from inventory.scanner.dataprocessing.inventoryimage import PackageImage
 from inventory.scanner.dataprocessing.processthread import DataThread
+from inventory.scanner.statistics.packagecount import PackageCount
 from inventory.scanner import logger
 from PIL import Image, ImageDraw
 import numpy as np
@@ -89,7 +89,7 @@ class ProcessCount:
         )
         self.package_detector = PackageDetector(
             model=path_package_model,
-            parameters=parameters
+            parameters=parameters,
         )
         self.identification_detector = IdentificationDetector(
             model=path_identification_model,
@@ -100,11 +100,11 @@ class ProcessCount:
         self.results_out = results_out
         self.shelf_id = 0
 
-    def process(
+    def process( #NOSONAR
             self, 
             shelf_image: Union[ShelfImage, np.ndarray],
             detect_code: bool=False,
-        ):
+        ) -> np.ndarray:
         """
         Stitch images -> process packages 
                       -> process codes/process texts
@@ -121,8 +121,12 @@ class ProcessCount:
             detect_code: bool
                 If this is true, identify packages by their QRCodes or Barcodes.
                 Otherwise identify them by their texts.
+        
+        Returns
+        -------
+            shelf_panorama: np.ndarray
+                This is the image with bounding box overlays.
         """
-
         if isinstance(shelf_image, np.ndarray):
             shelf_panorama = shelf_image
         else:
@@ -174,7 +178,7 @@ class ProcessCount:
             """Join Threads"""
 
             """
-            Create PackageImage based on decoded barcode/QR code. Collect
+            Create PackageCount based on decoded barcode/QR code. Collect
             packages with the same decoded information.
             """
 
@@ -201,7 +205,7 @@ class ProcessCount:
                 text_classifier_thread.join()
 
                 """
-                Categorize text detected, create PackageImage based on the text 
+                Categorize text detected, create PackageCount based on the text 
                 category. Collect packages with the same text category.
                 """
                 collected_packages = self.process_text_counts(
@@ -230,7 +234,7 @@ class ProcessCount:
             text_classifier: CategorizeText, 
         ) -> list:
         """
-        Analyzes the matches and the text classifications into PackageImage 
+        Analyzes the matches and the text classifications into PackageCount
         objects storing both the counts and the category for which the
         package belongs.
 
@@ -246,7 +250,7 @@ class ProcessCount:
         Returns
         --------
             collected_packages: list
-                This contains the PackageImage objects that were created. 
+                This contains the PackageCount objects that were created. 
         """
         collected_packages = list()
         captured_keys = list()
@@ -255,16 +259,16 @@ class ProcessCount:
                 # Indicates the index of the matched text is inside the key category.
                 if match[0] in value:
                     if key not in captured_keys:
-                        package = PackageImage(key)
+                        package = PackageCount(key)
                         collected_packages.append(package)
                         captured_keys.append(key)
                     else:
                         package_index = captured_keys.index(key)
                         package = collected_packages[package_index]
 
-                    package._count += 1
+                    package.increment_count()
                     # Store the package bounding box.
-                    package._boxes.append(match_package_text.ground_truths[match[1]])
+                    package.boxes.append(match_package_text.ground_truths[match[1]])
                     break
         return collected_packages      
 
@@ -392,7 +396,7 @@ class ProcessCount:
         Parameters
         -----------
             collected_packages: list
-                This contains PackageImage objects storing the counts and the
+                This contains PackageCount objects storing the counts and the
                 package labels.
 
             save: bool
@@ -400,10 +404,10 @@ class ProcessCount:
         """
         labels, counts = list(), list()
         for package in collected_packages:
-            package: PackageImage
-            print(f"{package._label}: {package._count}")
-            labels.append(package._label)
-            counts.append(package._count)
+            package: PackageCount
+            print(f"{package._label}: {package.count}")
+            labels.append(package.label)
+            counts.append(package.count)
         print("\n")
 
         if save:

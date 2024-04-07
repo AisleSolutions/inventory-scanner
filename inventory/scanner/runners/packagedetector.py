@@ -22,7 +22,7 @@ from inventory.scanner.dataprocessing.utils import (
 from inventory.scanner.kerasretinanet.models.tflite import TFliteRunner
 from inventory.scanner.kerasretinanet import models
 import numpy as np
-
+import os
 
 class PackageDetector:
     """
@@ -36,27 +36,23 @@ class PackageDetector:
 
         parameters: Parameters
             This contains model parameters.
-
-        use_tflite: bool
-            Use a TFLite model for the package detection model.
     """
     def __init__(
             self,
             model: str,
             parameters: Parameters,
-            use_tflite: bool=True
         ) -> None:
 
         self.model = validate_path(model)
-        if use_tflite:
+        if os.path.splitext(os.path.basename(self.model))[1].lower() == ".tflite":
             self.loaded_model = TFliteRunner(
             model=model,
-            parameters=parameters
-        )
+            parameters=parameters)
+            self.use_tflite = True
         else:
             self.loaded_model = models.load_model(self.model)
+            self.use_tflite = False
         self.parameters = parameters
-        self.use_tflite = use_tflite
 
     def detect(self, image: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """

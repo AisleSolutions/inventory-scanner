@@ -154,16 +154,6 @@ class InventoryImage:
         template = "Image(image_path={image_path})"
         return template.format(image_path=self._path)
 
-class PackageImage:
-    """
-    This class represents image cropped to contain only a single package.
-    Any text or barcode/QRCode detected on the package is stored here.
-    """
-    def __init__(self, label: str="Unlabeled") -> None:
-        self._label = label
-        self._count = 0
-        self._boxes = list()
-        self._descriptors = list()
 
 class ShelfImage:
     """

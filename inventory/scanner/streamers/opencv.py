@@ -49,6 +49,11 @@ class OpenCVStreamer:
         show: bool
             Set this condition to True to show the frames with bounding box
             overlays for sanity checking of the detections.
+
+        stitch: bool
+            Specify whether to perform image stitching to stitch captured
+            images into a unified shelf image which will be processed
+            for the counts.
     """
     def __init__(
             self,
@@ -57,12 +62,14 @@ class OpenCVStreamer:
             coordinator: Coordinator=None,
             fps: int=30,
             resolution: tuple=(1920, 1080),
-            show: bool=False
+            show: bool=False,
+            stitch: bool=False
         ) -> None:
         self.source = source
         self.count_processor = count_processor
         self.coordinator = coordinator
-        self._scan = True
+        self._scan = False
+        self.stitch = stitch
         self.shelf_image = ShelfImage()
 
         self.cap = self.open_camera(source)
@@ -179,10 +186,16 @@ class OpenCVStreamer:
             If this is True, then the frame was successfully captured.
         """
         ret, image = self.cap.read()
+        self.scan = True
         if ret:
+            image = self.count_processor.process(image)
+            image, has_shelving = self.coordinator.process(image)
             if self.scan:
                 # To perform stitching, pass `self.shelf_image` instead.
-                image = self.count_processor.process(image)
+                if self.stitch:
+                    image = self.count_processor.process(self.shelf_image)
+                else:
+                    image = self.count_processor.process(image)
                 self.scan = False
             else:
                 # Perform motor commands to align the robot.
@@ -190,11 +203,17 @@ class OpenCVStreamer:
                 # If the camera sees shelving, then store the images to stitch.
                 if has_shelving:
                     # This code stores the shelving to be stitched.
-                    #self.shelf_image._shelf_segments.append(image)
-                    self.scan = True
+                    if self.stitch:
+                        self.shelf_image._shelf_segments.append(image)
+                        self.scan = False
+                    else:
+                        self.scan = True
                 # Once the camera stops seeing shelving, start scanning.
                 else:
-                    self.scan = False
+                    if self.stitch:
+                        self.scan = True
+                    else:
+                        self.scan = False
 
             if self.show:
                 cv2.imshow("frame", image)

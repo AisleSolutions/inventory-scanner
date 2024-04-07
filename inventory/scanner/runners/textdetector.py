@@ -55,7 +55,7 @@ class TextDetector:
         height, width, _ = image.shape
         boxes, scores, texts = list(), list(), list()
         detections = self.reader.readtext(image)
-        if detections is None or len(detections) == 0:
+        if detections is None or len(detections) < 1:
             return boxes, scores, texts
 
         for detection in detections:

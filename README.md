@@ -189,7 +189,7 @@ python -m inventory.scanner
     --application=opencv 
     --show
     --package_model=packages-best-99-fp16.tflite
-    --identification_model=packages-best-99-fp16.tflite
+    --identification_model=barcode-best-fp16.tflite
     --shelf_model=shelves-best-fp16-99-epochs.tflite
 ```
 
